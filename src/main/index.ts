@@ -9,6 +9,7 @@ import { registerExportIpc } from './ipc/export.ipc'
 
 const config = new ConfigService()
 const log = new LogService()
+const appUserModelId = 'com.urovo.gerrit-change-exporter'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -17,6 +18,7 @@ function createWindow(): void {
     minWidth: 1120,
     minHeight: 720,
     title: 'Urovo Export',
+    icon: join(__dirname, '../../build/window-icon.ico'),
     backgroundColor: '#f4f7fb',
     webPreferences: {
       preload: join(__dirname, '../preload/index.mjs'),
@@ -34,6 +36,7 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  app.setAppUserModelId(appUserModelId)
   registerConfigIpc(config)
   registerGerritIpc(log)
   registerExportIpc(config, log)

@@ -35,7 +35,11 @@ export const useQueryStore = defineStore('query', {
       this.selectedKeys = []
       this.errors = []
     },
-    applyInstanceDefaults(instance?: GerritInstance) {
+    syncInstanceDefaults(instance?: GerritInstance) {
+      this.query.project = instance?.defaultProject || ''
+      this.query.branch = instance?.defaultBranch || ''
+    },
+    fillMissingInstanceDefaults(instance?: GerritInstance) {
       if (!instance) return
       if (!this.query.project && instance.defaultProject) this.query.project = instance.defaultProject
       if (!this.query.branch && instance.defaultBranch) this.query.branch = instance.defaultBranch
@@ -43,7 +47,7 @@ export const useQueryStore = defineStore('query', {
     async run(instance: GerritInstance) {
       this.loading = true
       this.errors = []
-      this.applyInstanceDefaults(instance)
+      this.fillMissingInstanceDefaults(instance)
       const queryId = `query-${Date.now()}-${Math.random().toString(16).slice(2)}`
       this.currentQueryId = queryId
       try {

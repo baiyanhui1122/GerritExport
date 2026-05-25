@@ -91,30 +91,23 @@ export class ExportService {
 
     const list = workbook.addWorksheet('提交列表')
     list.columns = [
-      { header: '序号', key: 'index' },
       { header: 'Project', key: 'project' },
-      { header: 'Branch', key: 'branch' },
-      { header: 'Change Number', key: 'changeNumber' },
       { header: 'Change-Id', key: 'changeId' },
-      { header: 'Status', key: 'status' },
       { header: 'Subject', key: 'subject' },
-      { header: 'Commit SHA', key: 'commitSha' },
-      { header: 'Author', key: 'authorName' },
-      { header: 'Author Email', key: 'authorEmail' },
-      { header: 'Author Date', key: 'authorDate' },
-      { header: 'Committer', key: 'committerName' },
-      { header: 'Committer Email', key: 'committerEmail' },
-      { header: 'Committer Date', key: 'committerDate' },
-      { header: 'Owner', key: 'ownerName' },
-      { header: 'Created', key: 'created' },
-      { header: 'Updated', key: 'updated' },
-      { header: 'Submitted', key: 'submitted' },
-      { header: 'Insertions', key: 'insertions' },
-      { header: 'Deletions', key: 'deletions' },
+      { header: 'Author', key: 'author' },
       { header: 'Review URL', key: 'reviewUrl' },
       { header: '完整提交信息', key: 'gitLogText' }
     ]
-    request.items.forEach((item, index) => list.addRow({ index: index + 1, ...item, gitLogText: formatGitLogText(item) }))
+    request.items.forEach((item) =>
+      list.addRow({
+        project: item.project,
+        changeId: item.changeId,
+        subject: item.subject,
+        author: `${item.authorName} <${item.authorEmail}>`,
+        reviewUrl: item.reviewUrl,
+        gitLogText: formatGitLogText(item)
+      })
+    )
 
     const messages = workbook.addWorksheet('Commit Message')
     messages.columns = [

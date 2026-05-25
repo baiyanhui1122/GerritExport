@@ -30,10 +30,14 @@
     "@electron-toolkit/tsconfig": "^1.0.1",
     "@types/node": "^22.10.7",
     "autoprefixer": "^10.4.20",
+    "docx": "^9.6.1",
     "electron": "^34.0.0",
     "electron-builder": "^25.1.8",
     "electron-vite": "^3.0.0",
+    "png-to-ico": "^3.0.1",
     "postcss": "^8.5.1",
+    "rcedit": "^5.0.2",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.3",
     "vite": "^6.0.7",
@@ -47,10 +51,13 @@
     },
     "files": [
       "out/**/*",
+      "build/**/*",
       "package.json"
     ],
     "asar": true,
+    "afterPack": "scripts/afterPack.cjs",
     "win": {
+      "icon": "build/app-icon.ico",
       "target": [
         "nsis",
         "portable"
@@ -60,8 +67,12 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "Urovo Export",
+      "installerIcon": "build/app-icon.ico",
+      "uninstallerIcon": "build/app-icon.ico",
+      "installerHeaderIcon": "build/app-icon.ico"
     }
   }
 }

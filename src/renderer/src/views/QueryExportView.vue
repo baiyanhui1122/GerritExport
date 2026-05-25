@@ -23,9 +23,9 @@ const current = ref<ExportCommitItem>()
 const selectedSet = computed(() => new Set(queryStore.selectedKeys))
 
 watch(
-  () => config.currentInstance,
-  (instance) => {
-    queryStore.applyInstanceDefaults(instance)
+  () => [config.currentInstanceId, config.currentInstance?.defaultProject, config.currentInstance?.defaultBranch],
+  () => {
+    queryStore.syncInstanceDefaults(config.currentInstance)
   },
   { immediate: true }
 )
@@ -36,6 +36,13 @@ async function search() {
     ElMessage.warning('请先配置 Gerrit 实例')
     return
   }
+
+  queryStore.fillMissingInstanceDefaults(instance)
+  if (!queryStore.query.branch?.trim()) {
+    ElMessage.warning('Branch 不能为空，请填写分支或在 Gerrit 实例中配置默认 Branch')
+    return
+  }
+
   try {
     await queryStore.run(instance)
     if (queryStore.items.length === 0) ElMessage.info('查询结果为空')
@@ -54,7 +61,7 @@ async function cancelSearch() {
 
 function resetQuery() {
   queryStore.reset()
-  queryStore.applyInstanceDefaults(config.currentInstance)
+  queryStore.syncInstanceDefaults(config.currentInstance)
 }
 
 function toggle(number: number) {
