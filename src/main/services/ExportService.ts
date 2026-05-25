@@ -2,7 +2,6 @@ import { writeFile } from 'node:fs/promises'
 import { randomUUID } from 'node:crypto'
 import { dialog } from 'electron'
 import ExcelJS from 'exceljs'
-import dayjs from 'dayjs'
 import { formatGitLogText } from '../../shared/formatGitLog'
 import type { ExportCommitItem, ExportFormat, ExportHistory, ExportRequest } from '../../shared/types'
 import { ConfigService } from './ConfigService'
@@ -11,7 +10,7 @@ export class ExportService {
   constructor(private readonly config: ConfigService) {}
 
   async export(request: ExportRequest): Promise<{ canceled: boolean; filePath?: string; history?: ExportHistory }> {
-    const filePath = await this.pickPath(request.format)
+    const filePath = await this.pickPath(request)
     if (!filePath) return { canceled: true }
 
     try {
@@ -45,13 +44,22 @@ export class ExportService {
     }
   }
 
-  private async pickPath(format: ExportFormat): Promise<string | undefined> {
+  private async pickPath(request: ExportRequest): Promise<string | undefined> {  //导出文件名
+    const format = request.format
+    const instanceName = this.safeFileName(request.instance?.name || 'Gerrit')
+    const startDate = this.safeFileName(request.query.startDate || 'StartDate')
+    const endDate = this.safeFileName(request.query.endDate || 'EndDate')
+
     const result = await dialog.showSaveDialog({
       title: '选择导出保存位置',
-      defaultPath: `gerrit-export-${dayjs().format('YYYYMMDD-HHmmss')}.${format}`,
+      defaultPath: `${instanceName}-${startDate}-${endDate}.${format}`,
       filters: [{ name: format.toUpperCase(), extensions: [format] }]
     })
     return result.canceled ? undefined : result.filePath
+  }
+
+  private safeFileName(value: string): string {
+    return value.replace(/[\\/:*?"<>|\x00-\x1f]/g, '_').replace(/\s+/g, ' ').trim() || 'Export'
   }
 
   private toTxt(items: ExportCommitItem[]): string {
@@ -91,24 +99,21 @@ export class ExportService {
 
     const list = workbook.addWorksheet('提交列表')
     list.columns = [
-      { header: 'Project', key: 'project' },
-      { header: 'Change-Id', key: 'changeId' },
+      { header: '\u5e8f\u53f7', key: 'index' },
       { header: 'Subject', key: 'subject' },
+      { header: '\u5b8c\u6574\u63d0\u4ea4\u4fe1\u606f', key: 'gitLogText' },
       { header: 'Author', key: 'author' },
-      { header: 'Review URL', key: 'reviewUrl' },
-      { header: '完整提交信息', key: 'gitLogText' }
+      { header: 'Review URL', key: 'reviewUrl' }
     ]
-    request.items.forEach((item) =>
+    request.items.forEach((item, index) =>
       list.addRow({
-        project: item.project,
-        changeId: item.changeId,
+        index: index + 1,
         subject: item.subject,
+        gitLogText: formatGitLogText(item),
         author: `${item.authorName} <${item.authorEmail}>`,
-        reviewUrl: item.reviewUrl,
-        gitLogText: formatGitLogText(item)
+        reviewUrl: item.reviewUrl
       })
     )
-
     const messages = workbook.addWorksheet('Commit Message')
     messages.columns = [
       { header: '序号', key: 'index' },
