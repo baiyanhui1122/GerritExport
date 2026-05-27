@@ -44,7 +44,7 @@ export class ExportService {
     }
   }
 
-  private async pickPath(request: ExportRequest): Promise<string | undefined> {  //导出文件名
+  private async pickPath(request: ExportRequest): Promise<string | undefined> {
     const format = request.format
     const instanceName = this.safeFileName(request.instance?.name || 'Gerrit')
     const startDate = this.safeFileName(request.query.startDate || 'StartDate')
@@ -109,7 +109,7 @@ export class ExportService {
       list.addRow({
         index: index + 1,
         subject: item.subject,
-        gitLogText: formatGitLogText(item),
+        gitLogText: this.formatExcelCommitText(item),
         author: `${item.authorName} <${item.authorEmail}>`,
         reviewUrl: item.reviewUrl
       })
@@ -138,6 +138,16 @@ export class ExportService {
 
     for (const sheet of workbook.worksheets) this.polish(sheet)
     await workbook.xlsx.writeFile(filePath)
+  }
+
+  private formatExcelCommitText(item: ExportCommitItem): string {
+    const messageLines = item.commitMessage
+      .replace(/\r\n/g, '\n')
+      .split('\n')
+      .filter((line) => !/^\s*Change-Id\s*:/i.test(line))
+      .filter((line) => !/^\s*Commit Tools Version\s*:/i.test(line))
+
+    return [`Author: ${item.authorName} <${item.authorEmail}>`, ...messageLines].join('\n').trimEnd()
   }
 
   private polish(sheet: ExcelJS.Worksheet): void {
