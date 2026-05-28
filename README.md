@@ -93,3 +93,5 @@ src/
   renderer/   Vue 3 前端界面
   shared/     前后端共享类型、查询构造、git log 格式化
 ```
+<img width="1341" height="863" alt="image" src="https://github.com/user-attachments/assets/27bea693-27ec-4e30-9fff-10788029355e" />
+
