@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, shell } from 'electron'
 import { is } from '@electron-toolkit/utils'
 import { ConfigService } from './services/ConfigService'
 import { LogService } from './services/LogService'
@@ -25,6 +25,19 @@ function createWindow(): void {
       sandbox: false,
       contextIsolation: true,
       nodeIntegration: false
+    }
+  })
+
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url)
+    return { action: 'deny' }
+  })
+
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    const currentUrl = mainWindow.webContents.getURL()
+    if (url !== currentUrl && /^https?:\/\//i.test(url)) {
+      event.preventDefault()
+      shell.openExternal(url)
     }
   })
 

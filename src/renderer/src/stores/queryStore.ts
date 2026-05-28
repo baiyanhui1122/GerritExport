@@ -8,6 +8,8 @@ export const defaultQuery = (): QueryOptions => ({
   includeReviewMessages: false,
   includeInlineComments: false,
   includeFiles: true,
+  includeDiffs: false,
+  includeFileContents: false,
   pageSize: 100,
   maxResults: 1000,
   concurrency: 5

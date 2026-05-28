@@ -114,6 +114,8 @@ export interface QueryOptions {
   includeReviewMessages: boolean
   includeInlineComments: boolean
   includeFiles: boolean
+  includeDiffs: boolean
+  includeFileContents: boolean
   pageSize: number
   maxResults: number
   concurrency: number
@@ -147,6 +149,20 @@ export interface ChangedFileItem {
   linesDeleted?: number
   sizeDelta?: number
   size?: number
+  diff?: string
+  diffRows?: FileDiffRow[]
+  content?: string
+  diffError?: string
+  contentError?: string
+}
+
+export type FileDiffRowType = 'context' | 'added' | 'removed' | 'skip'
+
+export interface FileDiffRow {
+  type: FileDiffRowType
+  oldLine?: number
+  newLine?: number
+  text: string
 }
 
 export interface ExportCommitItem {

@@ -133,8 +133,12 @@ export class ExportService {
     request.items.flatMap((item) => item.inlineComments || []).forEach((item) => comments.addRow([item.changeNumber, item.patchSet, item.filePath, item.line, item.author, item.updated, item.message, item.resolved, item.inReplyTo]))
 
     const files = workbook.addWorksheet('Changed Files')
-    files.columns = ['Change Number', 'File Path', 'Status', 'Lines Inserted', 'Lines Deleted', 'Size Delta', 'Size'].map((header) => ({ header, key: header }))
-    request.items.flatMap((item) => item.changedFiles || []).forEach((item) => files.addRow([item.changeNumber, item.filePath, item.status, item.linesInserted, item.linesDeleted, item.sizeDelta, item.size]))
+    files.columns = ['Change Number', 'File Path', 'Status', 'Lines Inserted', 'Lines Deleted', 'Size Delta', 'Size', 'Diff', 'File Content', 'Diff Error', 'Content Error'].map((header) => ({ header, key: header }))
+    request.items
+      .flatMap((item) => item.changedFiles || [])
+      .forEach((item) =>
+        files.addRow([item.changeNumber, item.filePath, item.status, item.linesInserted, item.linesDeleted, item.sizeDelta, item.size, item.diff, item.content, item.diffError, item.contentError])
+      )
 
     for (const sheet of workbook.worksheets) this.polish(sheet)
     await workbook.xlsx.writeFile(filePath)

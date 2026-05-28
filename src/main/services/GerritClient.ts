@@ -13,11 +13,23 @@ import type {
   GerritInlineComment,
   GerritInstance,
   GerritMessage,
+  FileDiffRow,
   InlineCommentItem,
   QueryOptions,
   QueryResult,
   ReviewMessageItem
 } from '../../shared/types'
+
+interface GerritDiffChunk {
+  ab?: string[]
+  a?: string[]
+  b?: string[]
+  skip?: number
+}
+
+interface GerritFileDiff {
+  content?: GerritDiffChunk[]
+}
 
 export class GerritClient {
   private readonly http: AxiosInstance
@@ -128,7 +140,7 @@ export class GerritClient {
 
     if (options.includeReviewMessages) base.reviewMessages = await this.getMessages(number)
     if (options.includeInlineComments) base.inlineComments = await this.getComments(number)
-    if (options.includeFiles) base.changedFiles = await this.getFiles(number)
+    base.changedFiles = await this.getFiles(number, options)
     return base
   }
 
@@ -166,10 +178,10 @@ export class GerritClient {
     )
   }
 
-  private async getFiles(changeNumber: number): Promise<ChangedFileItem[]> {
+  private async getFiles(changeNumber: number, options: QueryOptions): Promise<ChangedFileItem[]> {
     const response = await this.requestText(`/changes/${encodeURIComponent(String(changeNumber))}/revisions/current/files`)
     const files = parseGerritJson<Record<string, GerritFile>>(response)
-    return Object.entries(files).map(([filePath, file]) => ({
+    const items: ChangedFileItem[] = Object.entries(files).map(([filePath, file]) => ({
       changeNumber,
       filePath,
       status: file.status,
@@ -178,6 +190,78 @@ export class GerritClient {
       sizeDelta: file.size_delta,
       size: file.size
     }))
+
+    if (!options.includeDiffs && !options.includeFileContents) return items
+
+    return mapWithConcurrency(items, Math.min(options.concurrency || 5, 5), async (item) => {
+      if (options.includeDiffs) {
+        try {
+          const diff = await this.getFileDiff(changeNumber, item.filePath)
+          item.diff = diff.text
+          item.diffRows = diff.rows
+        } catch (error) {
+          item.diffError = this.humanError(error)
+        }
+      }
+
+      if (options.includeFileContents) {
+        try {
+          item.content = await this.getFileContent(changeNumber, item.filePath)
+        } catch (error) {
+          item.contentError = this.humanError(error)
+        }
+      }
+
+      return item
+    })
+  }
+
+  private async getFileDiff(changeNumber: number, filePath: string): Promise<{ text: string; rows: FileDiffRow[] }> {
+    const response = await this.requestText(`/changes/${encodeURIComponent(String(changeNumber))}/revisions/current/files/${encodeURIComponent(filePath)}/diff`, {
+      context: 10
+    })
+    const diff = parseGerritJson<GerritFileDiff>(response)
+    return this.diffToText(diff)
+  }
+
+  private async getFileContent(changeNumber: number, filePath: string): Promise<string> {
+    const response = await this.requestText(`/changes/${encodeURIComponent(String(changeNumber))}/revisions/current/files/${encodeURIComponent(filePath)}/content`)
+    const base64 = response.replace(/^\)\]\}'\s*/, '').trim()
+    return Buffer.from(base64, 'base64').toString('utf8')
+  }
+
+  private diffToText(diff: GerritFileDiff): { text: string; rows: FileDiffRow[] } {
+    const lines: string[] = []
+    const rows: FileDiffRow[] = []
+    let oldLine = 1
+    let newLine = 1
+
+    for (const chunk of diff.content || []) {
+      if (chunk.skip) {
+        const text = `... ${chunk.skip} unmodified lines ...`
+        lines.push(text)
+        rows.push({ type: 'skip', text })
+        oldLine += chunk.skip
+        newLine += chunk.skip
+      }
+
+      for (const line of chunk.ab || []) {
+        lines.push(` ${line}`)
+        rows.push({ type: 'context', oldLine: oldLine++, newLine: newLine++, text: line })
+      }
+
+      for (const line of chunk.a || []) {
+        lines.push(`-${line}`)
+        rows.push({ type: 'removed', oldLine: oldLine++, text: line })
+      }
+
+      for (const line of chunk.b || []) {
+        lines.push(`+${line}`)
+        rows.push({ type: 'added', newLine: newLine++, text: line })
+      }
+    }
+
+    return { text: lines.join('\n'), rows }
   }
 
   private async requestText(url: string, params?: Record<string, unknown>): Promise<string> {

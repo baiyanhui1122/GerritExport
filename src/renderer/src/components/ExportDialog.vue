@@ -47,7 +47,6 @@ watch(
         <el-checkbox v-model="form.includeQuery">包含查询条件</el-checkbox>
         <el-checkbox v-model="form.includeReviewMessages">包含 Review Messages</el-checkbox>
         <el-checkbox v-model="form.includeInlineComments">包含 Inline Comments</el-checkbox>
-        <el-checkbox v-model="form.includeFiles">包含 Changed Files</el-checkbox>
       </div>
     </el-form>
     <template #footer>

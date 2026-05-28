@@ -62,8 +62,11 @@ const emit = defineEmits<{ search: []; reset: []; cancel: [] }>()
           <el-form-item label="包含 Inline Comments">
             <el-switch v-model="model.includeInlineComments" />
           </el-form-item>
-          <el-form-item label="包含 Changed Files">
-            <el-switch v-model="model.includeFiles" />
+          <el-form-item label="拉取 Diff">
+            <el-switch v-model="model.includeDiffs" />
+          </el-form-item>
+          <el-form-item label="拉取完整文件内容">
+            <el-switch v-model="model.includeFileContents" />
           </el-form-item>
           <el-form-item label="每页数量">
             <el-input-number v-model="model.pageSize" :min="20" :max="100" />
