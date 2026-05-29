@@ -1,6 +1,6 @@
-# Urovo Export
+# Gerrit Export
 
-Urovo Export 是一个基于 Electron + Vue 3 + TypeScript 的 Gerrit Change Exporter 桌面工具，用于批量查询 Gerrit 修改并导出 git log 风格提交信息。
+Gerrit Export 是一个基于 Electron + Vue 3 + TypeScript 的 Gerrit Change Exporter 桌面工具，用于批量查询 Gerrit 修改并导出 git log 风格提交信息。
 
 ## 功能
 
